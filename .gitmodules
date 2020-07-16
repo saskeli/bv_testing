@@ -1,0 +1,3 @@
+[submodule "deps/DYNAMIC"]
+	path = deps/DYNAMIC
+	url = git@github.com:xxsds/DYNAMIC.git

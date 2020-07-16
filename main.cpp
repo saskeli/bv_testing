@@ -1,79 +1,64 @@
+#include <chrono>
 #include <iostream>
 #include <vector>
-#include <chrono>
 
 #include "bufferedbv.hpp"
+#include "spsi.hpp"
+#include "succinct_bitvector.hpp"
+#include "dynamic.hpp"
 
-#define N 1000000
+typedef dyn::succinct_bitvector<dyn::spsi<dyn::buffered_packed_vector<8>, 4056, 256>>
+    bbv;
+
+typedef dyn::buffered_packed_vector<8> pv;
 
 int main(int, char**) {
-    std::cout << "Generating input..." << std::endl;
-    std::srand(1337);
-    auto vec = new uint32_t[N]();
-    auto vals = std::bitset<N>();
-    for (size_t i = 0; i < N; i++) {
-        vec[i] = std::rand() % (100 + i);
-        vals.set(i, std::rand() % 2);
+    uint64_t size = 10000;
+    auto tree = new bbv();
+
+    for (uint64_t i = 0; i < size; i++) {
+        auto set = i % 2;
+        tree->insert(i, set);
+        auto val = tree->at(i);
+        if (val != set) {
+            std::cout << "1" << std::endl;
+            return 1;
+        }
+        auto s = tree->size();
+        if (s != i + 1) {
+            std::cout << "2" << std::endl;
+            return 1;
+        }
     }
 
-    std::cout << "Timing 2 element buffer" << std::endl;
-    auto bv2 = dyn::packed_vector<2>();
-    auto t1 = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < N; i++) {
-        bv2.insert(vec[i], vals.test(i));
+    for (uint64_t i = 0; i < size; i++) {
+        auto val = tree->at(i);
+        if (val != i % 2) {
+            std::cout << "3" << std::endl;
+            return 1;
+        }
     }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "\t" << N << " operation in " << duration << "us" << std::endl;
 
-    std::cout << "Timing 4 element buffer" << std::endl;
-    auto bv4 = dyn::packed_vector<4>();
-    t1 = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < N; i++) {
-        bv4.insert(vec[i], vals.test(i));
+    for (uint64_t i = 1; i < size; i++) {
+        tree->remove(0);
+        auto new_size = tree->size();
+        if (size - i != new_size) {
+            std::cout << "4" << std::endl;
+            return 1;
+        }
+        bool prev = tree->at(0);
+        for (uint64_t j = 1; j < new_size; j++) {
+            bool cur = tree->at(j);
+            if (prev == cur) {
+                std::cout << "problem!" << std::endl;
+                tree->print();
+            }
+            prev = cur;
+        }
+
+        if (i == 9882) tree->print();
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "\t" << N << " operation in " << duration << "us" << std::endl;
 
-    std::cout << "Timing 8 element buffer" << std::endl;
-    auto bv8 = dyn::packed_vector<8>();
-    t1 = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < N; i++) {
-        bv8.insert(vec[i], vals.test(i));
-    }
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "\t" << N << " operation in " << duration << "us" << std::endl;
+    delete tree;
+}
 
-    std::cout << "Timing 16 element buffer" << std::endl;
-    auto bv16 = dyn::packed_vector<16>();
-    t1 = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < N; i++) {
-        bv16.insert(vec[i], vals.test(i));
-    }
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "\t" << N << " operation in " << duration << "us" << std::endl;
-
-    std::cout << "Timing 32 element buffer" << std::endl;
-    auto bv32 = dyn::packed_vector<32>();
-    t1 = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < N; i++) {
-        bv32.insert(vec[i], vals.test(i));
-    }
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "\t" << N << " operation in " << duration << "us" << std::endl;
-
-    std::cout << "Timing 64 element buffer" << std::endl;
-    auto bv64 = dyn::packed_vector<64>();
-    t1 = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < N; i++) {
-        bv64.insert(vec[i], vals.test(i));
-    }
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "\t" << N << " operation in " << duration << "us" << std::endl;
-
- }
