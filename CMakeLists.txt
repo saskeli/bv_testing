@@ -27,6 +27,8 @@ add_executable(bv_testing main.cpp)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 
+set(CMAKE_CXX_FLAGS_DEBUG  "-rdynamic -g")
+
 include_directories ("deps/DYNAMIC/include/internal")
 include_directories ("deps/DYNAMIC/include")
 include(CPack)
