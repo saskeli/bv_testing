@@ -1,3 +1,5 @@
 [submodule "deps/DYNAMIC"]
 	path = deps/DYNAMIC
 	url = git@github.com:xxsds/DYNAMIC.git
+[submodule "deps/DYNAMIC/"]
+	url = git@github.com:saskeli/DYNAMIC.git

@@ -4,14 +4,14 @@
 
 
 # Configuration directories and files
-SourceDirectory: /home/saskeli/bv_testing
-BuildDirectory: /home/saskeli/bv_testing
+SourceDirectory: /home/local/saska/bv_testing
+BuildDirectory: /home/local/saska/bv_testing
 
 # Where to place the cost data store
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: saskeli-uguu
+Site: hpf-20
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
 BuildName: Linux-c++
@@ -26,8 +26,8 @@ SubmitURL: http://
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "/home/saskeli/cmake/cmake-3.17.2/bin/cmake" "/home/saskeli/bv_testing"
-MakeCommand: /home/saskeli/cmake/cmake-3.17.2/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
+ConfigureCommand: "/home/local/saska/cmake/cmake-3.14.4/bin/cmake" "/home/local/saska/bv_testing"
+MakeCommand: /home/local/saska/cmake/cmake-3.14.4/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}"
 DefaultCTestConfigurationType: Release
 
 # version control
@@ -35,11 +35,11 @@ UpdateVersionOnly:
 
 # CVS options
 # Default is "-d -P -A"
-CVSCommand: CVSCOMMAND-NOTFOUND
+CVSCommand: /usr/bin/cvs
 CVSUpdateOptions: -d -A -P
 
 # Subversion options
-SVNCommand: SVNCOMMAND-NOTFOUND
+SVNCommand: /usr/bin/svn
 SVNOptions: 
 SVNUpdateOptions: 
 
@@ -63,17 +63,15 @@ UpdateType: git
 
 # Compiler info
 Compiler: /usr/bin/c++
-CompilerVersion: 9.3.0
+CompilerVersion: 10.1.0
 
 # Dynamic analysis (MemCheck)
 PurifyCommand: 
 ValgrindCommand: 
 ValgrindCommandOptions: 
-DrMemoryCommand: 
-DrMemoryCommandOptions: 
 MemoryCheckType: 
 MemoryCheckSanitizerOptions: 
-MemoryCheckCommand: /home/saskeli/valgrind/bin/valgrind
+MemoryCheckCommand: MEMORYCHECK_COMMAND-NOTFOUND
 MemoryCheckCommandOptions: 
 MemoryCheckSuppressionFile: 
 
