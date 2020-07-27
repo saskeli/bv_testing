@@ -171,7 +171,7 @@ bool run_test(std::vector<uint16_t> &ops) {
 
     size_t i = 1;
     while (i < ops.size()) {
-        if (i == 19) {
+        /*if (i <= 14) {
             std::cout << "States before:\nBuffered:\n";
             buffered_tree->print();
             std::cout << "Control:\n";
