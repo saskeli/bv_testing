@@ -4,6 +4,13 @@ project(bv_testing VERSION 0.1.0)
 include(FetchContent)
 include(CTest)
 
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+#set(CMAKE_VERBOSE_MAKEFILE ON)
+
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
@@ -28,6 +35,7 @@ set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 
 set(CMAKE_CXX_FLAGS_DEBUG  "-rdynamic -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast -fstrict-aliasing -DNDEBUG -march=native")
 
 include_directories ("deps/DYNAMIC/include/internal")
 include_directories ("deps/DYNAMIC/include")

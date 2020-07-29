@@ -4,13 +4,11 @@
 
 #pragma once
 
-#include <execinfo.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <algorithm>
-#include <bitset>
 #include <cassert>
 #include <cstdint>
 #include <iostream>
@@ -89,14 +87,16 @@ class buffered_packed_vector {
         uint64_t index = i;
         for (uint8_t idx = 0; idx < buffer_count; idx++) {
             uint64_t b = buffer_index(buffer[idx]);
-            if (b == i) {
+            if (b < i) {
+                index += buffer_is_insertion(buffer[idx]) ? -1 : 1;
+            } else if (b == i) {
                 if (buffer_is_insertion(buffer[idx])) {
                     return buffer_value(buffer[idx]);
                 } else {
                     index++;
                 }
-            } else if (b < i) {
-                index += buffer_is_insertion(buffer[idx]) ? -1 : 1;
+            } else  {
+                break;
             }
         }
         return MASK & (words[fast_div(index)] >> fast_mod(index));
@@ -274,9 +274,6 @@ class buffered_packed_vector {
     void append(uint64_t x) { push_back(x); }
 
     void remove(uint64_t i) {
-        if (buffer_count == buffer_size) {
-            flatten();
-        }
         assert(i < size_);
         auto x = this->at(i);
         psum_ -= x;
@@ -296,6 +293,7 @@ class buffered_packed_vector {
         if (done) return;
         buffer[buffer_count] = create_buffer(i, 0, x);
         buffer_count++;
+        if (buffer_count == buffer_size) flatten();
     }
 
     void insert(uint64_t i, uint64_t x) {
@@ -303,25 +301,23 @@ class buffered_packed_vector {
             push_back(x);
             return;
         }
-        if (buffer_count == buffer_size) {
-            flatten();
-        } else {
-            sort_buffer();
-        }
+        sort_buffer();
         psum_ += x ? 1 : 0;
         bool done = false;
-        uint64_t a_pos = i;
+        int a_pos = 0;
         for (uint8_t idx = 0; idx < buffer_count; idx++) {
             uint32_t b = buffer_index(buffer[idx]);
             if (b < i) {
                 a_pos += buffer_is_insertion(buffer[idx]) ? -1 : 1;
             } else if (b == i && !done && !buffer_is_insertion(buffer[idx]) &&
-                       buffer_value(buffer[b]) ==
-                           ((words[fast_div(b + a_pos)] & (MASK << fast_mod(b + a_pos)))
+                       buffer_value(buffer[idx]) ==
+                           ((words[fast_div(b + a_pos)] &
+                             (MASK << fast_mod(b + a_pos)))
                                 ? true
                                 : false)) {
                 delete_buffer_element(idx--);
                 done = true;
+                a_pos += b;
                 continue;
             } else {
                 set_buffer_index(b + 1, idx);
@@ -338,6 +334,7 @@ class buffered_packed_vector {
         }
         buffer[buffer_count] = create_buffer(i, 1, x);
         buffer_count++;
+        if (buffer_count == buffer_size) flatten();
     }
 
     /*
@@ -528,7 +525,8 @@ class buffered_packed_vector {
         }
 
         /*
-        std::cout << "   Total count and offset index: " << count << ", " << idx << std::endl;
+        std::cout << "   Total count and offset index: " << count << ", " << idx
+        << std::endl;
         // */
 
         uint64_t target_word = fast_div(idx);
@@ -536,7 +534,8 @@ class buffered_packed_vector {
         for (size_t i = 0; i < target_word; i++) {
             count += __builtin_popcountll(words[i]);
             /*
-            std::cout << "   Count after adding word " << i << " = " << count << std::endl;
+            std::cout << "   Count after adding word " << i << " = " << count <<
+            std::endl;
             // */
         }
         count += __builtin_popcountll(words[target_word] &

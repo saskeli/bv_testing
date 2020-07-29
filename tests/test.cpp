@@ -7,7 +7,7 @@
 
 using namespace dyn;
 
-typedef succinct_bitvector<spsi<buffered_packed_vector<18>, 8192, 16>> bbv;
+typedef succinct_bitvector<spsi<buffered_packed_vector<4>, 8192, 16>> bbv;
 typedef buffered_packed_vector<8> pv;
 
 TEST(PV, push_back) { pv_pushback_test<pv>(); }
@@ -65,32 +65,38 @@ TEST(PV, Select1000) { select_test<pv>(1000); }
 TEST(PV, Select10000) { select_test<pv>(10000); }
 
 TEST(BBV, Random1) {
-    std::vector<uint16_t> ops{3, 1, 0, 0, 1, 1, 2, 0, 0, 1,
+    std::vector<uint32_t> ops{3, 1, 0, 0, 1, 1, 2, 0, 0, 1,
                               0, 2, 0, 1, 3, 0, 0, 0, 1};
     run_test<bbv>(ops);
 }
 
 TEST(BBV, Random2) {
-    std::vector<uint16_t> ops{1, 3, 1, 1, 1, 1, 0, 2, 0, 1, 3,
+    std::vector<uint32_t> ops{1, 3, 1, 1, 1, 1, 0, 2, 0, 1, 3,
                               0, 1, 0, 3, 0, 0, 0, 1, 5, 0};
     run_test<bbv>(ops);
 }
 
 TEST(BBV, Random3) {
-    std::vector<uint16_t> ops{47, 3, 1,     5, 15391, 4, 19, 3, 0, 5, 10556, 4,
+    std::vector<uint32_t> ops{47, 3, 1,     5, 15391, 4, 19, 3, 0, 5, 10556, 4,
                               47, 5, 27092, 5, 24392, 4, 3,  0, 3, 1};
     run_test<bbv>(ops);
 }
 
 TEST(BBV, Random4) {
-    std::vector<uint16_t> ops{98, 5,  21266, 1, 64, 2, 9, 1,  3, 1, 5, 26631,
+    std::vector<uint32_t> ops{98, 5,  21266, 1, 64, 2, 9, 1,  3, 1, 5, 26631,
                               0,  87, 1,     2, 94, 0, 1, 63, 3, 1, 5, 4707};
     run_test<bbv>(ops);
 }
 
 TEST(BBV, Random5) {
-    std::vector<uint16_t> ops{34, 1,  5, 5, 54003, 1, 5, 3, 1,     3, 1,
+    std::vector<uint32_t> ops{34, 1,  5, 5, 54003, 1, 5, 3, 1,     3, 1,
                               4,  19, 3, 0, 0,     5, 1, 5, 17609, 4, 8};
+    run_test<bbv>(ops);
+}
+
+TEST(BBV, Random6) {
+    std::vector<uint32_t> ops{5, 2, 0, 1, 4, 0, 1, 2, 0, 1,     1, 3,
+                              1, 1, 2, 4, 1, 0, 2, 0, 5, 53251, 4, 5};
     run_test<bbv>(ops);
 }
 

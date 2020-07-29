@@ -125,14 +125,14 @@ T* generate_tree(const uint64_t amount) {
 }
 
 template <class T>
-void run_test(std::vector<uint16_t>& ops) {
+void run_test(std::vector<uint32_t>& ops) {
     auto buffered_tree = generate_tree<T>(ops[0]);
     auto control_tree = generate_tree<control_bv>(ops[0]);
 
     size_t i = 1;
     while (i < ops.size()) {
         uint8_t step = 0;
-        uint16_t selection = ops[i];
+        uint32_t selection = ops[i];
         uint64_t s = 0;
         switch (selection) {
             case 0:
@@ -175,7 +175,8 @@ void run_test(std::vector<uint16_t>& ops) {
                 ASSERT_EQ(b_r, c_r)
                     << "Unexpected result of rank(" << ic_r
                     << ") query at " << i <<". Expected " << c_r << ", got " << b_r;
-            } break;
+                } 
+                break;
             default:
                 s = buffered_tree->size();
                 step = 2;

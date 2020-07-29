@@ -1,6 +1,6 @@
 #include <chrono>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <random>
 #include <vector>
 
@@ -9,16 +9,44 @@
 #include "spsi.hpp"
 #include "succinct_bitvector.hpp"
 
+#include "runners.hpp"
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<1>, 8192, 16>>
+    bbv1;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<2>, 8192, 16>>
+    bbv2;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<3>, 8192, 16>>
+    bbv3;
+
 typedef dyn::succinct_bitvector<
     dyn::spsi<dyn::buffered_packed_vector<4>, 8192, 16>>
-    bbv;
+    bbv4;
 
-typedef dyn::buffered_packed_vector<8> pv;
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<6>, 8192, 16>>
+    bbv6;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<8>, 8192, 16>>
+    bbv8;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<16>, 8192, 16>>
+    bbv16;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<32>, 8192, 16>>
+    bbv32;    
 
 typedef dyn::suc_bv sbv;
 
-int8_t get_op(std::vector<uint16_t> &ops, std::mt19937 &gen, uint16_t size) {
-    uint16_t selection = gen() % 6;
+int8_t get_op(std::vector<uint32_t> &ops, std::mt19937 &gen, uint32_t size) {
+    uint32_t selection = gen() % 7;
     ops.push_back(selection);
     switch (selection) {
         case 0:
@@ -38,253 +66,86 @@ int8_t get_op(std::vector<uint16_t> &ops, std::mt19937 &gen, uint16_t size) {
         case 4:
             ops.push_back(size ? gen() % size : 0);
             return 0;
-        default:
+        case 5:
             ops.push_back(gen());
             return 0;
-    }
-}
-
-uint8_t execute_op(bbv &buffered_tree, sbv &control_tree,
-                   std::vector<uint16_t> &ops, size_t i) {
-    uint8_t ret = 0;
-    uint16_t selection = ops[i];
-    uint64_t s = 0;
-    switch (selection) {
-        case 0:
-            s = buffered_tree.size();
-            buffered_tree.insert(s ? ops[i + 1] % s : 0, ops[i + 2]);
-            s = control_tree.size();
-            control_tree.insert(s ? ops[i + 1] % s : 0, ops[i + 2]);
-            ret = 3;
-            break;
-        case 1:
-            s = buffered_tree.size();
-            if (s == 0) {
-                ret = 2;
-                break;
-            }
-            buffered_tree.remove(ops[i + 1] % buffered_tree.size());
-            control_tree.remove(ops[i + 1] % control_tree.size());
-            ret = 2;
-            break;
-        case 2:
-            s = buffered_tree.size();
-            if (s == 0) {
-                ret = 3;
-                break;
-            }
-            buffered_tree.set(ops[i + 1] % buffered_tree.size(), ops[i + 2]);
-            control_tree.set(ops[i + 1] % control_tree.size(), ops[i + 2]);
-            ret = 3;
-            break;
-        case 3:
-            buffered_tree.push_back(ops[i + 1]);
-            control_tree.push_back(ops[i + 1]);
-            ret = 2;
-            break;
-        case 4: {
-            s = buffered_tree.size();
-            if (s == 0) {
-                ret = 2;
-                break;
-            }
-            uint64_t ib_r = ops[i + 1] % buffered_tree.size();
-            uint64_t ic_r = ops[i + 1] % control_tree.size();
-            uint64_t b_r = buffered_tree.rank(ib_r);
-            uint64_t c_r = control_tree.rank(ic_r);
-            if (b_r != c_r) {
-                std::cout << " Unexpected result of rank(" << ib_r << ") query. Expected " << c_r << ", got " << b_r << std::endl;
-                return 0;
-            }
-            ret = 2; }
-            break;
         default:
-            s = buffered_tree.size();
-            if (s == 0) {
-                ret = 2;
-                break;
-            }
-            uint64_t ba_r = buffered_tree.rank(buffered_tree.size());
-            uint64_t ca_r = control_tree.rank(control_tree.size());
-            if (ba_r != ca_r) {
-                std::cout << " Unexpected one count for rank query. Expected " << ca_r << ", got " << ba_r << std::endl;
-                return 0;
-            }
-            if (ba_r == 0) {
-                ret = 2;
-                break;
-            }
-            auto loc = ops[i + 1] % ba_r;
-            uint64_t b_s = buffered_tree.select(loc);
-            uint64_t c_s = control_tree.select(loc);
-            if (b_s != c_s) {
-                std::cout << " Unexpected result of select(" << loc << ") query. Expected " << c_s << ", got " << b_s << std::endl;
-                return 0;
-            }
-            ret = 2;
-            break;
-    }
-
-    uint64_t size = control_tree.size();
-    if (size != buffered_tree.size()) {
-        std::cout << " Expected vector size of " << size << " but found " << buffered_tree.size() << std::endl;
-        return 0;
-    }
-    for (size_t idx = 0; idx < size; idx++) {
-        if (control_tree.at(idx) != buffered_tree.at(idx)) {
-            std::cout << " Expected " << control_tree.at(idx) << " at position " << idx << std::endl;
+            ops.push_back(size ? gen() % size: 0);
             return 0;
-        }
     }
-
-    return ret;
-}
-
-void output_comparison(bbv &buffered_tree, sbv &control_tree) {
-    size_t s_idx = 0;
-    while (s_idx < buffered_tree.size() || s_idx < control_tree.size()) {
-        std::cout << " pos " << s_idx << ":\n ";
-        for (size_t idx = s_idx; idx < s_idx + 64; idx++) {
-            if (idx >= control_tree.size()) break;
-            std::cout << (control_tree.at(idx) ? 1 : 0);
-        }
-        std::cout << "\n ";
-        for (size_t idx = s_idx; idx < s_idx + 64; idx++) {
-            if (idx >= buffered_tree.size()) break;
-            std::cout << (buffered_tree.at(idx) == control_tree.at(idx) ? "" : "\033[31m") << (buffered_tree.at(idx) ? 1 : 0) << "\033[0m";
-        }
-        std::cout << std::endl;
-        s_idx += 64;
-    }
-}
-
-bool run_test(std::vector<uint16_t> &ops) {
-    auto buffered_tree = new bbv();
-    auto control_tree = new sbv();
-
-    for (size_t i = 0; i < ops[0]; i++) {
-        buffered_tree->push_back(i % 2);
-        control_tree->push_back(i % 2);
-    }
-
-    bool error = false;
-
-    size_t i = 1;
-    while (i < ops.size()) {
-        /*if (i <= 14) {
-            std::cout << "States before:\nBuffered:\n";
-            buffered_tree->print();
-            std::cout << "Control:\n";
-            control_tree->print();
-            std::cout << std::endl;
-        }
-        // */
-        uint8_t res = execute_op(*buffered_tree, *control_tree, ops, i);
-        if (!res) {
-            std::cout << "Problem at " << i << " with:\n";
-            for (size_t idx = 0; idx < ops.size(); idx++) {
-                std::cout << std::setw(6) << idx << " ";
-            }
-            std::cout << "\n";
-            for (auto v : ops) {
-                std::cout << std::setw(6) << v << " ";
-            }
-            std::cout << std::endl;
-            std::cout << std::setw(0);
-            output_comparison(*buffered_tree, *control_tree);
-
-            std::cout << "Buffered:\n";
-            buffered_tree->print();
-            std::cout << "Control:\n";
-            control_tree->print();
-
-            error = true;
-            break;
-        }
-        i += res;
-    }
-
-    delete buffered_tree;
-    delete control_tree;
-
-    return error;
-}
-
-bool run_random_test(size_t num_ops, uint16_t initial_size_limit) {
-    std::vector<uint16_t> ops;
-
-    std::random_device rd;
-    size_t seed = rd();
-
-    std::mt19937 gen(seed);
-
-    auto buffered_tree = new bbv();
-    auto control_tree = new sbv();
-
-    uint16_t size = initial_size_limit ? gen() % initial_size_limit : 0;
-    ops.push_back(size);
-
-    for (size_t i = 0; i < num_ops; i++) {
-        size += get_op(ops, gen, size);
-    }
-
-    std::cout << "\r";
-    for (auto v : ops) std::cout << v << " ";
-
-    return run_test(ops);
-}
-
-void run_manual_test() {
-    auto buf = new bbv();
-    auto cont = new sbv();
-    
-    // 145 2 56 1 1 92 2 13 1 1 3 1 3 0 89 1 2 92 1 1 129
-
-    
-    for (size_t i = 0; i < 192; i++) {
-        buf->push_back(i % 2);
-        cont->push_back(i % 2);
-    }
-
-    cont->insert(40, 0);
-    buf->insert(40, 0);
-    std::cout << "=======================================" << std::endl;
-
-    cont->insert(76, 1);
-    buf->insert(76, 1);
-
-    std::cout << "=======================================" << std::endl;
-    std::cout << "control:" << std::endl;
-    cont->print();
-    std::cout << "Buffered:" << std::endl;
-    buf->print();
-    std::cout << "Selects c: " << cont->select(59) << ", b: " << buf->select(59) << std::endl;
-
-
-
-    delete buf;
-    delete cont;
 }
 
 int main(int argc, char **argv) {
-    std::cout << "argc: " << argc << std::endl;
-
-    if (argc <= 1) {
-        for (size_t i = 0; i < 1000000; i++) {
-            if (i % 1000 == 0) std::cout << "\nRunning test " << i << "              " << std::endl;
-            if (run_random_test(10, 200)) {
-                std::cout << "Ran " << (i + 1) << " tests before terminating" << std::endl;
-                break;
-            }
-        }
-    } else if (argc == 2) {
-        run_manual_test();
-    } else {
-        std::vector<uint16_t> ops;
-        for (size_t i = 1; i < argc; i++) {
-            ops.push_back(atoi(argv[i]));
-        }
-        if (!run_test(ops)) std::cout << "Passed!" << std::endl;
-    }
     
+    int w = 12;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    if (argc > 1) {
+        std::vector<uint32_t> b_ops;
+        std::vector<uint32_t> c_ops;
+        b_ops.push_back(20000);
+        c_ops.push_back(20000);
+        for (size_t i = 1; i < 7; i++) {
+            b_ops.push_back(0);
+            b_ops.push_back(0);
+            b_ops.push_back(i % 2);
+        }
+        for (size_t i = 0; i < 20000; i++) {
+            b_ops.push_back(6);
+            c_ops.push_back(6);
+            uint32_t v = gen() % 20000;
+            b_ops.push_back(v);
+            c_ops.push_back(v);
+        }
+        std::cout << "Control: " << std::setw(w) << run_timing<sbv>(c_ops) << std::endl;
+        std::cout << "Buffer8: " << std::setw(w) << run_timing<bbv8>(b_ops) << std::endl;
+        return 0;
+    }
+
+    uint32_t initial_size_limit = 100000;
+    uint32_t num_ops = 100000;
+
+    std::cout << "  buf:";
+    auto a = {0, 1, 2, 3, 4, 6, 8, 16, 32};
+    for (auto v : a) std::cout << std::setw(w) << v;
+    std::cout << std::endl;
+    for (size_t i = 0; i < 100; i++) {
+        std::cout << "      ";
+        std::vector<uint32_t> ops;
+        uint16_t size = gen() % initial_size_limit;
+        ops.push_back(size);
+        for (size_t i = 0; i < num_ops; i++) {
+            size += get_op(ops, gen, size);
+        }
+        std::cerr << "0, 1:" << std::endl;
+        if (run_test<sbv, bbv1>(ops)) break;
+        std::cout << std::setw(w) << run_timing<sbv>(ops);
+        std::cerr << "1, 2:" << std::endl;
+        if (run_test<bbv1, bbv2>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv1>(ops);
+        std::cerr << "2, 3:" << std::endl;
+        if (run_test<bbv2, bbv3>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv2>(ops);
+        std::cerr << "3, 4:" << std::endl;
+        if (run_test<bbv3, bbv4>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv3>(ops);
+        std::cerr << "4, 6:" << std::endl;
+        if (run_test<bbv4, bbv6>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv4>(ops);
+        std::cerr << "6, 8:" << std::endl;
+        if (run_test<bbv6, bbv8>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv6>(ops);
+        std::cerr << "8, 16:" << std::endl;
+        if (run_test<bbv8, bbv16>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv8>(ops);
+        std::cerr << "16, 32:" << std::endl;
+        if (run_test<bbv16, bbv32>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv16>(ops);
+        std::cout << std::setw(w) << run_timing<bbv32>(ops);
+        
+        std::cout << std::endl;
+    }
+    return 0;
 }
