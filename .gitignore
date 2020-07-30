@@ -12,6 +12,8 @@ _deps
 
 log.txt
 
+*.log
+
 .vscode
 
 bv_testing

@@ -7,7 +7,7 @@
 
 using namespace dyn;
 
-typedef succinct_bitvector<spsi<buffered_packed_vector<4>, 8192, 16>> bbv;
+typedef succinct_bitvector<spsi<buffered_packed_vector<8>, 8192, 16>> bbv;
 typedef buffered_packed_vector<8> pv;
 
 TEST(PV, push_back) { pv_pushback_test<pv>(); }

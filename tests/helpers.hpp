@@ -35,11 +35,7 @@ void pv_insert_test() {
         EXPECT_EQ(val, i + 1) << "Psum after " << i << " insertions should be "
                               << i << " was " << val;
     }
-    std::cout << "bv dump:\n ";
-    for (size_t i = 0; i < 90; i++) {
-        std::cout << bv->at(i);
-    }
-    std::cout << std::endl;
+
     for (size_t i = 0; i < 90; i++) {
         bool actual = bv->at(i);
         bool expected = i >= 15 && i < 75;
@@ -53,12 +49,6 @@ void pv_insert_test() {
             << "Psum should stay at 60 when inserting zeros. Was " << val
             << " at " << i;
     }
-
-    std::cout << "bv dump:\n ";
-    for (size_t i = 0; i < 120; i++) {
-        std::cout << bv->at(i);
-    }
-    std::cout << std::endl;
 
     for (size_t i = 0; i < 120; i++) {
         EXPECT_EQ(bv->at(i), (i >= 15 && i < 45) || (i >= 75 && i < 105))

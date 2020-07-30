@@ -12,14 +12,6 @@
 #include "runners.hpp"
 
 typedef dyn::succinct_bitvector<
-    dyn::spsi<dyn::buffered_packed_vector<1>, 8192, 16>>
-    bbv1;
-
-typedef dyn::succinct_bitvector<
-    dyn::spsi<dyn::buffered_packed_vector<2>, 8192, 16>>
-    bbv2;
-
-typedef dyn::succinct_bitvector<
     dyn::spsi<dyn::buffered_packed_vector<3>, 8192, 16>>
     bbv3;
 
@@ -28,20 +20,40 @@ typedef dyn::succinct_bitvector<
     bbv4;
 
 typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<5>, 8192, 16>>
+    bbv5;
+
+typedef dyn::succinct_bitvector<
     dyn::spsi<dyn::buffered_packed_vector<6>, 8192, 16>>
     bbv6;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<7>, 8192, 16>>
+    bbv7;
 
 typedef dyn::succinct_bitvector<
     dyn::spsi<dyn::buffered_packed_vector<8>, 8192, 16>>
     bbv8;
 
 typedef dyn::succinct_bitvector<
-    dyn::spsi<dyn::buffered_packed_vector<16>, 8192, 16>>
-    bbv16;
+    dyn::spsi<dyn::buffered_packed_vector<9>, 8192, 16>>
+    bbv9;
 
 typedef dyn::succinct_bitvector<
-    dyn::spsi<dyn::buffered_packed_vector<32>, 8192, 16>>
-    bbv32;    
+    dyn::spsi<dyn::buffered_packed_vector<10>, 8192, 16>>
+    bbv10;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<11>, 8192, 16>>
+    bbv11;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<12>, 8192, 16>>
+    bbv12;
+
+typedef dyn::succinct_bitvector<
+    dyn::spsi<dyn::buffered_packed_vector<16>, 8192, 16>>
+    bbv16;
 
 typedef dyn::suc_bv sbv;
 
@@ -108,10 +120,10 @@ int main(int argc, char **argv) {
     uint32_t num_ops = 100000;
 
     std::cout << "  buf:";
-    auto a = {0, 1, 2, 3, 4, 6, 8, 16, 32};
+    auto a = {0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16};
     for (auto v : a) std::cout << std::setw(w) << v;
     std::cout << std::endl;
-    for (size_t i = 0; i < 100; i++) {
+    for (size_t i = 0; i < 1000; i++) {
         std::cout << "      ";
         std::vector<uint32_t> ops;
         uint16_t size = gen() % initial_size_limit;
@@ -119,31 +131,30 @@ int main(int argc, char **argv) {
         for (size_t i = 0; i < num_ops; i++) {
             size += get_op(ops, gen, size);
         }
-        std::cerr << "0, 1:" << std::endl;
-        if (run_test<sbv, bbv1>(ops)) break;
+        if (run_test<sbv, bbv3>(ops)) break;
         std::cout << std::setw(w) << run_timing<sbv>(ops);
-        std::cerr << "1, 2:" << std::endl;
-        if (run_test<bbv1, bbv2>(ops)) break;
-        std::cout << std::setw(w) << run_timing<bbv1>(ops);
-        std::cerr << "2, 3:" << std::endl;
-        if (run_test<bbv2, bbv3>(ops)) break;
-        std::cout << std::setw(w) << run_timing<bbv2>(ops);
-        std::cerr << "3, 4:" << std::endl;
         if (run_test<bbv3, bbv4>(ops)) break;
         std::cout << std::setw(w) << run_timing<bbv3>(ops);
-        std::cerr << "4, 6:" << std::endl;
-        if (run_test<bbv4, bbv6>(ops)) break;
+        if (run_test<bbv4, bbv5>(ops)) break;
         std::cout << std::setw(w) << run_timing<bbv4>(ops);
-        std::cerr << "6, 8:" << std::endl;
-        if (run_test<bbv6, bbv8>(ops)) break;
+        if (run_test<bbv5, bbv6>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv5>(ops);
+        if (run_test<bbv6, bbv7>(ops)) break;
         std::cout << std::setw(w) << run_timing<bbv6>(ops);
-        std::cerr << "8, 16:" << std::endl;
-        if (run_test<bbv8, bbv16>(ops)) break;
+        if (run_test<bbv7, bbv8>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv7>(ops);
+        if (run_test<bbv8, bbv9>(ops)) break;
         std::cout << std::setw(w) << run_timing<bbv8>(ops);
-        std::cerr << "16, 32:" << std::endl;
-        if (run_test<bbv16, bbv32>(ops)) break;
+        if (run_test<bbv9, bbv10>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv9>(ops);
+        if (run_test<bbv10, bbv11>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv10>(ops);
+        if (run_test<bbv11, bbv12>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv11>(ops);
+        if (run_test<bbv12, bbv16>(ops)) break;
+        std::cout << std::setw(w) << run_timing<bbv12>(ops);
+        if (run_test<bbv16, sbv>(ops)) break;
         std::cout << std::setw(w) << run_timing<bbv16>(ops);
-        std::cout << std::setw(w) << run_timing<bbv32>(ops);
         
         std::cout << std::endl;
     }
