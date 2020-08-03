@@ -38,7 +38,7 @@ uint8_t execute_op(T &buffered_tree, std::vector<uint32_t> &ops, size_t i,
         case 5: {
             out = 0;
             if (s == 0) return 2;
-            uint64_t ba_r = buffered_tree.rank(buffered_tree.size());
+            uint64_t ba_r = buffered_tree.rank(buffered_tree.size() - 1);
             if (ba_r == 0) return 2;
             out = buffered_tree.select(ops[i + 1] % ba_r);
             }

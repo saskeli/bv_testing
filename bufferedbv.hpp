@@ -100,7 +100,10 @@ class buffered_packed_vector {
     /*
      * inclusive partial sum (i.e. up to element i included)
      */
-    uint64_t psum(uint64_t i) const { return rank(i + 1); }
+    uint64_t psum(uint64_t i) const { 
+        assert(i < size_);
+        return rank(i + 1); 
+    }
 
     /*
      * smallest index j such that psum(j)>=x
@@ -380,7 +383,7 @@ class buffered_packed_vector {
             psum_++;
         }
 
-        assert((size_ - buffer_count) / int_per_word_ <= words.size());
+        assert((((size_ << 1) - pb_size) >> 6) <= words.size());
     }
 
     uint64_t size() const { return size_; }
@@ -521,7 +524,6 @@ class buffered_packed_vector {
     }
 
     uint64_t rank(uint64_t n) const {
-        assert(n < size_);
         uint64_t count = 0;
 
         uint64_t idx = n;
@@ -579,22 +581,6 @@ class buffered_packed_vector {
         }
         buffer[l] = 0;
     }
-/*
-    void sort_buffer() {
-        for (uint8_t i = 1; i < buffer_size; i++) {
-            if (i >= buffer_count) return;
-            for (uint8_t j = i; j >= 1; j--) {
-                if (buffer[j] < buffer[j - 1]) {
-                    uint32_t t = buffer[j - 1];
-                    buffer[j - 1] = buffer[j];
-                    buffer[j] = t;
-                } else {
-                    break;
-                }
-            }
-        }
-    }
-    */
 
     void set_without_psum_update(uint64_t i, uint64_t x) {
         uint64_t idx = i;
